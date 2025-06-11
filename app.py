@@ -5,8 +5,6 @@ from PIL import Image
 import warnings
 import torch.nn as nn 
 import torchvision.models as models
-import os
-import gdown
 
 model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
 
@@ -42,6 +40,7 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 @st.cache_resource
 def load_model(model_path):
+    """Loads the PyTorch model from the specified path."""
     local_model = models.resnet50()
     local_model.fc = nn.Sequential(
         nn.Linear(local_model.fc.in_features, 512),
@@ -50,11 +49,7 @@ def load_model(model_path):
         nn.Dropout(p=0.4),
         nn.Linear(512, 2)
     )
-
-    # Load the entire checkpoint dictionary.
-    checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-    local_model.load_state_dict(checkpoint['model_state_dict'])
-    
+    local_model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     local_model.eval()
     return local_model
 
@@ -77,22 +72,7 @@ def import_and_predict(image_data, model_instance):
 
     return predicted_class_index.item(), confidence.item()
 
-def download_model_from_drive(file_id, output_path):
-    if not os.path.exists(output_path):
-        st.info("Downloading model... This might take a moment.")
-        try:
-            url = f'https://drive.google.com/uc?id={file_id}'
-            gdown.download(url, output_path, quiet=False)
-            st.success("Model downloaded successfully.")
-        except Exception as e:
-            st.error(f"Error downloading model: {e}")
-            st.stop()
-
-GDRIVE_FILE_ID = "1O-xajP2gfAmMLGkxrjmb_hfUMcAnbUZA"
-MODEL_PATH = "Stage1_fix_ResNet50_CE_3Data_checkpoint_best_epoch_8" 
-
-download_model_from_drive(GDRIVE_FILE_ID, MODEL_PATH)
-
+MODEL_PATH = "/content/drive/MyDrive/Deepfake_stand_out_model_bestcheck/ResNet50 CE 3Data/Stage1_balanced/Stage1_fix_ResNet50_CE_3Data_checkpoint_best_epoch_8.pth" 
 
 try:
     model_to_use = load_model(MODEL_PATH)
